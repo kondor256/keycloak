@@ -69,6 +69,11 @@ public class UserAttributeLDAPStorageMapper extends AbstractLDAPStorageMapper {
         super(mapperModel, ldapProvider);
     }
 
+    private String removeDomain(String username){
+        String[] splitted = username.split("@");
+        if (splitted.length != 2) return username;
+        return splitted[0];
+    }
     @Override
     public void onImportUserFromLDAP(LDAPObject ldapUser, UserModel user, RealmModel realm, boolean isCreate) {
         String userModelAttrName = getUserModelAttribute();
@@ -94,6 +99,11 @@ public class UserAttributeLDAPStorageMapper extends AbstractLDAPStorageMapper {
             // we don't have java property. Let's set attribute
             Set<String> ldapAttrValue = ldapUser.getAttributeAsSet(ldapAttrName);
             if (ldapAttrValue != null) {
+                if (userModelAttrName.equalsIgnoreCase("userPrincipalName")){
+                    String attr = removeDomain(ldapAttrValue.iterator().next());
+                    ldapAttrValue = new LinkedHashSet<>();
+                    ldapAttrValue.add(attr);
+                }
                 user.setAttribute(userModelAttrName, new ArrayList<>(ldapAttrValue));
             } else {
                 user.removeAttribute(userModelAttrName);
